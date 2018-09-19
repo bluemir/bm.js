@@ -1,0 +1,41 @@
+<link rel="import" href="../minilib.html" />
+
+<template>
+	<style>
+		:host {
+		}
+	</style>
+	<slot name="header"></slot>
+	<ol>
+	</ol>
+</template>
+<script>
+	(function(template){
+		class ScoreBoard extends CustomElement {
+			constructor() {
+				super(template.content);
+
+				this.on("attribute-changed", (evt) => this.load(this.attr("from")));
+			}
+			static get observedAttributes() {
+				return ["from"];
+			}
+			async load(url){
+				if (!url) {
+					console.warn("not enough information")
+					return
+				}
+				var res = await $.request("GET", url)
+				res.json.map((e) => {
+					return $.create("li", {
+						$text: `${e.name} - ${e.score}`,
+
+					});
+				}).forEach((e) => {
+					$.get(this["--shadow"], "ol").appendChild(e);
+				})
+			}
+		}
+		customElements.define("score-board", ScoreBoard);
+	})(document.currentScript.ownerDocument.querySelector('template'))
+</script>

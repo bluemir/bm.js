@@ -151,6 +151,9 @@ var $ = (function(){
 	extend(Element, {
 		attr: function(name, value){
 			if (value !== undefined) {
+				if (value === null) {
+					this.removeAttribute(name);
+				}
 				this.setAttribute(name, value)
 				return value;
 			} else {
