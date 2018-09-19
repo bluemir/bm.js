@@ -5,7 +5,7 @@ bluemir's light-weight web component  library.
 
 see example
 
-## HOW TO SEE EXAMPLE
+## HOW TO RUN EXAMPLE
 
 ```
 git clone https://github.com/bluemir/web-components
