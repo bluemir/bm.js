@@ -109,6 +109,36 @@ var $ = (function(){
 				return func();
 			}
 		},
+		template: function(templateNode, data) {
+			var clone = document.importNode(templateNode.content, true);
+
+			var f = function(match, name) {
+				var arr = name.split(".")
+				var result = data;
+				for (var i = 0; i < arr.length; i++) {
+					result = result[arr[i]]
+				}
+				return result;
+			}
+			var pattern = /{{([a-zA-Z0-9.]+)}}/g
+			var each = function(node) {
+				switch (node.nodeType) {
+					case Node.TEXT_NODE:
+						node.textContent = node.textContent.replace(pattern, f)
+						break;
+					case Node.ELEMENT_NODE:
+						for (var i = 0; i <  node.attributes.length; i++) {
+							node.attributes[i].value = node.attributes[i].value.replace(pattern, f);
+						}
+						break;
+					default:
+				}
+				node.childNodes.forEach(each)
+			}
+			clone.childNodes.forEach(each)
+
+			return clone;
+		},
 		_registerGlobal() {
 			window.$ = this;
 		},
@@ -135,8 +165,6 @@ var $ = (function(){
 			return key + "=" + obj[key];
 		}).join("&");
 	}
-
-
 
 	function extend(TargetClass, proto){
 		Object.keys(proto).forEach(function(name) {
