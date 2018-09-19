@@ -1,4 +1,4 @@
-bluemir's light-weight web component libaray.
+bluemir's light-weight web component  library.
 
 
 ## HOW TO USE
