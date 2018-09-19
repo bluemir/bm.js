@@ -30,8 +30,9 @@
 				}
 				var res = await $.request("GET", url)
 
+				$.get(this["--shadow"], "ol").clear($.filters.exceptTemplate);
+
 				var t = $.get(this["--shadow"], "template[name=item]")
-				$.all(this["--shadow"], "ol > li").forEach((e) => e.removeThis())
 				res.json.map((e) => {
 					return $.template(t, e);
 					// or

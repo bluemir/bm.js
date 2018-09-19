@@ -8,11 +8,7 @@ class CustomElement extends HTMLElement {
 		var shadow = this["--shadow"] = this.attachShadow({mode: 'open'})
 		shadow.appendChild(clone);
 	}
-	fireEvent(name, detail) {
-		 var evt = new CustomEvent(name, {detail: detail})
 
-		this.dispatchEvent(evt)
-	}
 	attributeChangedCallback(name, oldValue, newValue) {
 		//  to use set follow to custom elements
 		//

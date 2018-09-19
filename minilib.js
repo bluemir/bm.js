@@ -116,6 +116,10 @@ var $ = (function(){
 				var arr = name.split(".")
 				var result = data;
 				for (var i = 0; i < arr.length; i++) {
+					if (!result) {
+						console.warn(`[$.template] find pattern '${name}', but not provided`);
+						return "";
+					}
 					result = result[arr[i]]
 				}
 				return result;
@@ -139,7 +143,12 @@ var $ = (function(){
 
 			return clone;
 		},
-		_registerGlobal() {
+		filters: {
+			exceptTemplate: function(elem) {
+				return elem.tagName != "TEMPLATE";
+			}
+		},
+		_registerGlobal: function() {
 			window.$ = this;
 		},
 	}
@@ -152,7 +161,7 @@ var $ = (function(){
 			if (params[name]) {
 				return params[name];
 			}
-			console.warn("[$.reqeust] find param pattern '"+name+"', but not provided");
+			console.warn(`[$.reqeust] find param pattern '${name}', but not provided`);
 			return matched;
 		});
 	}
@@ -169,12 +178,21 @@ var $ = (function(){
 	function extend(TargetClass, proto){
 		Object.keys(proto).forEach(function(name) {
 			if (name  in TargetClass.prototype) {
-				console.warn("cannot extend prototype: '"+name+"' already exist")
+				console.warn(`cannot extend prototype: '${name}' already exist`)
 				return; // skip
 			}
 			TargetClass.prototype[name] = proto[name];
 		});
 	}
+	extend(Node, {
+		removeThis : function(){
+			this.parentElement.removeChild(this);
+		},
+		clear : function(filter) {
+			var f = filter || function(e) { return true };
+			this.childNodes.filter(f).forEach((e) => this.removeChild(e))
+		}
+	});
 
 	extend(Element, {
 		attr: function(name, value){
@@ -188,27 +206,26 @@ var $ = (function(){
 				return this.getAttribute(name)
 			}
 		},
-		"removeThis" : function(){
-			this.parentElement.removeChild(this);
-		},
-		"clear" : function(){
-			while (this.childNodes.length > 0) {
-				this.removeChild(this.childNodes[0]);
-			}
-		}
 	})
 
 	extend(EventTarget, {
-		"on" : function() {
+		on : function() {
 			this.addEventListener.apply(this, arguments);
+			return this;
+		},
+		fireEvent: function(name, detail) {
+			var evt = new CustomEvent(name, {detail: detail});
+			this.dispatchEvent(evt);
 			return this;
 		}
 	});
 
 	extend(NodeList, {
 		"map": Array.prototype.map,
+		"filter": Array.prototype.filter,
 		//"forEach": Array.prototype.forEach,
 	});
+
 	extend(Array, {
 		"all": function all() { return Promise.all(this); },
 		"race": function race() { return Promise.race(this); },
