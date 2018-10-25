@@ -143,6 +143,26 @@ var $ = (function(){
 
 			return clone;
 		},
+		form: function(form) {
+			return $.all(form, "input").map((e) => {
+				var name = e.attr("name");
+				var value = e.value;
+				var t = e.attr("type");
+				if (t == "number") {
+					value = value - 0; // change to number
+				}
+				return {name, value}
+			}).reduce((p, c) => {
+				p[c.name] = c.value;
+				return p;
+			},{})
+		},
+		bindForm: function(form, data) {
+			$.all(form, "input").forEach((e) => {
+				var name = e.attr("name");
+				e.value = data[name] || "";
+			});
+		},
 		filters: {
 			exceptTemplate: function(elem) {
 				return elem.tagName != "TEMPLATE";
