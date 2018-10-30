@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 	<head>
+		<link rel="import" href="./message-panel.html" />
 		<link rel="import" href="./score-board.html" />
 		<link rel="import" href="./score-register-form.html" />
 	</head>
@@ -8,6 +9,7 @@
 		<score-board from="./data.json">
 			<div slot="header">
 				<h2>I am header!</h2>
+				<message-panel></message-panel>
 			</div>
 		</score-board>
 		<score-register-form send-to="url" type="json"></score-register-form>

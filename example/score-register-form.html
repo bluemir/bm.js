@@ -49,6 +49,7 @@
 							break;
 						default:
 							console.error("unsupported type")
+							$.event.fireEvent("message:warn", "unsupported type");
 							return;
 					}
 
@@ -56,11 +57,14 @@
 						body: body,
 					});
 
-					this.fire("updated", res.json);
+					this.fireEvent("updated", res.json);
+					$.event.fireEvent("score:updated", res.json);
+					$.event.fireEvent("message:info", "Score updated");
 					this.enable();
 				} catch (e) {
 					console.log("submit failed", e);
 					$.get(this["--shadow"], ".msg").classList.remove("hide");
+					$.event.fireEvent("message:error", "submit failed");
 				}
 			}
 			enable() {
