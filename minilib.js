@@ -168,6 +168,7 @@ var $ = (function(){
 				return elem.tagName != "TEMPLATE";
 			}
 		},
+		event: new EventTarget(),
 		_registerGlobal: function() {
 			window.$ = this;
 		},
