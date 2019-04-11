@@ -1,0 +1,47 @@
+import $ from "../minilib.module.js";
+
+var html = `
+<style>
+	:host {
+	}
+</style>
+<slot name="header"></slot>
+<ol>
+	<template name="item">
+		<li id="{{name}}">{{name}} - {{score}}</li>
+	</template>
+</ol>
+`
+
+var template = $.create("template", { $html: html });
+
+class ScoreBoard extends $.CustomElement {
+	constructor() {
+		super(template.content);
+
+		this.on("attribute-changed", (evt) => this.load(this.attr("from")));
+	}
+	static get observedAttributes() {
+		return ["from"];
+	}
+	async load(url){
+		if (!url) {
+			console.warn("not enough information")
+			return
+		}
+		var res = await $.request("GET", url)
+
+		$.get(this["--shadow"], "ol").clear($.filters.exceptTemplate);
+
+		var t = $.get(this["--shadow"], "template[name=item]")
+		res.json.map((e) => {
+			return $.template(t, e);
+			// or
+			// return $.create("li", {$text: `${e.name} - ${e.score}`, id: e.name});
+		}).forEach((e) => {
+			$.get(this["--shadow"], "ol").appendChild(e);
+		});
+	}
+}
+customElements.define("score-board", ScoreBoard);
+
