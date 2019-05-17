@@ -13,3 +13,4 @@ cd web-components
 python -m SimpleHTTPServer
 open localhost:8000/example/main.html
 ```
+

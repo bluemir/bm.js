@@ -70,10 +70,10 @@ class ScoreRegistryForm  extends $.CustomElement {
 		}
 	}
 	enable() {
-		$.all(this["--shadow"], "input").forEach((e) => e.attr("disabled", null))
+		$.all(this["--shadow"], "input").forEach((e) => {e.value=""; e.attr("disabled", null) });
 	}
 	disable() {
-		$.all(this["--shadow"], "input").forEach((e) => e.attr("disabled", ""))
+		$.all(this["--shadow"], "input").forEach((e) => e.attr("disabled", ""));
 	}
 }
 customElements.define("score-register-form", ScoreRegistryForm);

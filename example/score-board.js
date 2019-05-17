@@ -19,7 +19,15 @@ class ScoreBoard extends $.CustomElement {
 	constructor() {
 		super(template.content);
 
-		this.on("attribute-changed", (evt) => this.load(this.attr("from")));
+		this.on("attribute-changed", async (evt) => {
+
+			await navigator.serviceWorker.register("./service-worker.js")
+			await new Promise((resolve, reject) => { setTimeout(resolve, 1000)})
+			console.log("load")
+			await this.load(this.attr("from"))
+		});
+
+		$.event.on("score:updated", () => this.load(this.attr("from")));
 	}
 	static get observedAttributes() {
 		return ["from"];
@@ -30,6 +38,7 @@ class ScoreBoard extends $.CustomElement {
 			return
 		}
 		var res = await $.request("GET", url)
+		console.log("load complete");
 
 		$.get(this["--shadow"], "ol").clear($.filters.exceptTemplate);
 

@@ -1,11 +1,9 @@
 <!doctype html>
 <html>
 	<head>
-		<script type="module">
-			import "./message-panel.js";
-			import "./score-board.js";
-			import "./score-register-form.js";
-		</script>
+		<script type="module" src="./message-panel.js"></script>
+		<script type="module" src="./score-board.js"></script>
+		<script type="module" src="./score-register-form.js"></script>
 	</head>
 	<body>
 		<score-board from="./data.json">
@@ -15,5 +13,6 @@
 			</div>
 		</score-board>
 		<score-register-form send-to="url" type="json"></score-register-form>
+		<script type="module" src="./app.js"></script>
 	</body>
 </html>

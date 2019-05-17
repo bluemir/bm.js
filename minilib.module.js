@@ -196,6 +196,11 @@ function queryString(obj) {
 }
 
 function extend(TargetClass, proto){
+	if (TargetClass.hasOwnProperty("__minilib_inserted__")) {
+		console.trace("already installed")
+		return // already inserted
+	}
+
 	Object.keys(proto).forEach(function(name) {
 		if (name  in TargetClass.prototype) {
 			console.warn(`cannot extend prototype: '${name}' already exist`)
@@ -203,6 +208,8 @@ function extend(TargetClass, proto){
 		}
 		TargetClass.prototype[name] = proto[name];
 	});
+
+	TargetClass.__minilib_inserted__ = true
 }
 extend(Node, {
 	removeThis : function(){
@@ -216,10 +223,12 @@ extend(Node, {
 
 extend(Element, {
 	attr: function(name, value){
+		if (value === null) {
+			this.removeAttribute(name);
+			return
+		}
 		if (value !== undefined) {
-			if (value === null) {
-				this.removeAttribute(name);
-			}
+
 			this.setAttribute(name, value)
 			return value;
 		} else {
