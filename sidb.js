@@ -10,21 +10,21 @@ function openDB({name, version, update} = {update:()=>{}}){
 		request.onsuccess = (evt) => {
 			var db = evt.target.result;
 
-			resolve(new DB(db))
+			resolve(new SIDB(db))
 		}
 		request.onerror = reject;
 	})
 }
-class DB {
+class SIDB {
 	constructor(db) {
 		this.inner = db
 	}
 	transaction(stores, mode) {
 		var tx = this.inner.transaction(stores, mode)
-		return new Transaction(tx)
+		return new SIDBTransaction(tx)
 	}
 }
-class Transaction{
+class SIDBTransaction{
 	constructor(tx) {
 		this.inner = tx
 
@@ -35,10 +35,10 @@ class Transaction{
 	}
 	store(name) {
 		var store = this.inner.objectStore(name)
-		return new ObjectStore(store)
+		return new SIDBObjectStore(store)
 	}
 }
-class ObjectStore {
+class SIDBObjectStore {
 	constructor(os) {
 		this.inner = os
 	}
@@ -60,45 +60,16 @@ class ObjectStore {
 			req.onerror = reject;
 		})
 	}
-	async lista() {
-		return new Promise((resolve, reject) => {
-			var req = this.inner.openCursor();
-			var ctx = {}
-			var cur;
-			ctx[Symbol.iterator] = function() {
-				return {
-					next: function() {
-						if (cur) {
-							var here = cur.value;
-							return {done: false, value: new Promise((resolve, reject) => {
-								req.onsuccess = (evt) => {
-									cur = evt.target.result
-									resolve(here);
-								}
-								cur.continue();
-							})};
-						} else {
-							return {done: true};
-						}
-					}
-				};
-			}
-			req.onsuccess = (evt) => {
-				cur = evt.target.result
-				resolve(ctx)
-			};
-		})
-	}
 	async list() {
 		var ctx = await new Promise(resolve =>{
 			var req = this.inner.openCursor();
-			req.onsuccess = (evt) => { var cur = evt.target.result ; resolve(new Cursor(req, cur)); }
+			req.onsuccess = (evt) => { var cur = evt.target.result ; resolve(new SIDBCursor(req, cur)); }
 		});
 		return ctx
 	}
 }
 
-class Cursor {
+class SIDBCursor {
 	// TODO async?
 	constructor(req, cursor) {
 		this.req = req;
@@ -117,7 +88,7 @@ class Cursor {
 		return value;
 	}
 }
-
+/*
 class EventIter {
 	constructor(obj){
 		this.target = obj
@@ -130,3 +101,4 @@ class EventIter {
 		}
 	}
 }
+*/
