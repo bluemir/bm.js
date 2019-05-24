@@ -108,7 +108,17 @@ var $ = {
 			return func();
 		}
 	},
-	template: function(templateNode, data) {
+	template: function(strings, ...args) {
+		var html = ""
+
+		for( var i = 0; i < strings.length; i++) {
+			html += strings[i] + (args[i] ||"");
+		}
+
+		var template = $.create("template", { $html: html });
+		return template;
+	},
+	render: function(templateNode, data) {
 		var clone = document.importNode(templateNode.content, true);
 
 		var f = function(match, name) {

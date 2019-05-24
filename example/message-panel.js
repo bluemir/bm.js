@@ -1,6 +1,6 @@
 import $ from "../minilib.module.js";
 
-var html = `
+var template = $.template`
 <style>
 	:host {
 	}
@@ -20,8 +20,7 @@ var html = `
 		<p class="{{level}}">{{text}}</p>
 	</template>
 </div>
-`
-var template = $.create("template", { $html: html });
+`;
 
 class MessagePanel extends $.CustomElement {
 	constructor() {
@@ -33,7 +32,7 @@ class MessagePanel extends $.CustomElement {
 	}
 	add(level, text) {
 		var t = $.get(this["--shadow"], "template[name=item]")
-		$.get(this["--shadow"], "div").appendChild($.template(t, { level, text }));
+		$.get(this["--shadow"], "div").appendChild($.render(t, { level, text }));
 	}
 }
 customElements.define("message-panel", MessagePanel);

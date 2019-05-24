@@ -1,6 +1,6 @@
 import $ from "../minilib.module.js";
 
-var html = `
+var template = $.template`
 <style>
 	:host {
 	}
@@ -11,9 +11,7 @@ var html = `
 		<li id="{{name}}">{{name}} - {{score}}</li>
 	</template>
 </ol>
-`
-
-var template = $.create("template", { $html: html });
+`;
 
 class ScoreBoard extends $.CustomElement {
 	constructor() {
@@ -44,7 +42,7 @@ class ScoreBoard extends $.CustomElement {
 
 		var t = $.get(this["--shadow"], "template[name=item]")
 		res.json.map((e) => {
-			return $.template(t, e);
+			return $.render(t, e);
 			// or
 			// return $.create("li", {$text: `${e.name} - ${e.score}`, id: e.name});
 		}).forEach((e) => {

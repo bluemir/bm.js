@@ -41,6 +41,7 @@ this.addEventListener("fetch", function(evt) {
 
 
 async function loadScore() {
+	console.log(db);
 	var tx = db.transaction(["rank"], "readwrite")
 	var store = tx.store("rank");
 
