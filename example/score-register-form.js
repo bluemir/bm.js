@@ -1,6 +1,6 @@
 import $ from "../minilib.module.js";
 
-var html = `
+var template = $.template`
 <style>
 	:host {
 	}
@@ -21,9 +21,7 @@ var html = `
 	<button type="submit">Submit</button>
 </form>
 
-`
-
-var template = $.create("template", { $html: html });
+`;
 
 class ScoreRegistryForm  extends $.CustomElement {
 	constructor() {
