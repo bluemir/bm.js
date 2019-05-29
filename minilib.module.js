@@ -133,7 +133,7 @@ var $ = {
 			}
 			return result || "";
 		}
-		var pattern = /{{([a-zA-Z0-9.]+)}}/g
+		var pattern = /{{([a-zA-Z0-9._-]+)}}/g
 		var each = function(node) {
 			switch (node.nodeType) {
 				case Node.TEXT_NODE:
