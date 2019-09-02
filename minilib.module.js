@@ -181,6 +181,31 @@ var $ = {
 	_registerGlobal: function() {
 		window.$ = this;
 	},
+	animateFrame: function(callback, {fps = 30} = {}) {
+		var stop = false;
+		var fpsInterval = 1000 / fps;
+		var then = Date.now();
+		animate();
+
+		function animate() {
+			if (stop) {
+				return;
+			}
+			requestAnimationFrame(animate);
+
+			var now = Date.now();
+			var elapsed = now - then;
+
+			if (elapsed > fpsInterval) {
+				then = now - (elapsed % fpsInterval);
+
+				var ret = callback(elapsed - (elapsed%fpsInterval));
+				if (ret && ret.stop) {
+					 stop = true;
+				}
+			}
+		}
+	}
 }
 
 function resolveParam(url, params) {
