@@ -7,11 +7,12 @@ var template = $.template`
 </style>
 <slot name="header"></slot>
 <ol>
-	<template name="item">
-		<li id="{{name}}">{{name}} - {{score}}</li>
-	</template>
 </ol>
 `;
+
+var itemTemplate = $.template`
+<li id="{{name}}">{{name}} - {{score}}</li>
+`
 
 class ScoreBoard extends $.CustomElement {
 	constructor() {
@@ -38,11 +39,8 @@ class ScoreBoard extends $.CustomElement {
 		var res = await $.request("GET", url)
 		console.log("load complete");
 
-		$.get(this["--shadow"], "ol").clear($.filters.exceptTemplate);
-
-		var t = $.get(this["--shadow"], "template[name=item]")
 		res.json.map((e) => {
-			return $.render(t, e);
+			return $.render(itemTemplate, e);
 			// or
 			// return $.create("li", {$text: `${e.name} - ${e.score}`, id: e.name});
 		}).forEach((e) => {

@@ -48,15 +48,15 @@ var $ = {
 						statusCode: req.status,
 						text : req.responseText,
 					};
+
+					var contentType = req.getResponseHeader("Content-Type") || "";
+					if(contentType.includes("application/json")) {
+						result.json = JSON.parse(result.text);
+					}
+
 					if (req.status >= 200, req.status < 300){
-						if(req.getResponseHeader("Content-Type").includes("application/json")) {
-							result.json = JSON.parse(result.text);
-						}
 						resolve(result)
 					} else {
-						if(req.getResponseHeader("Content-Type").includes("application/json")) {
-							result.json = JSON.parse(result.text);
-						}
 						reject(result);
 					}
 				}
@@ -133,7 +133,7 @@ var $ = {
 			}
 			return result || "";
 		}
-		var pattern = /{{([a-zA-Z0-9._-]+)}}/g
+		var pattern = /{{\s*([a-zA-Z0-9._-]+)\s*}}/g
 		var each = function(node) {
 			switch (node.nodeType) {
 				case Node.TEXT_NODE:
@@ -323,6 +323,9 @@ class CustomElement extends HTMLElement {
 	}
 	disconnectedCallback() {
 		this.fireEvent("disconnected")
+	}
+	get shadow() {
+		return this["--shadow"];
 	}
 }
 
