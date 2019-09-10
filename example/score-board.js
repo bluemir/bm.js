@@ -10,8 +10,10 @@ var template = $.template`
 </ol>
 `;
 
-var itemTemplate = $.template`
-<li id="{{name}}">{{name}} - {{score}}</li>
+var itemsTemplate = $.template`
+<template x-render-each=".">
+	<li id="{{name}}">{{name}} - {{score}}</li>
+</template>
 `
 
 class ScoreBoard extends $.CustomElement {
@@ -19,9 +21,6 @@ class ScoreBoard extends $.CustomElement {
 		super(template.content);
 
 		this.on("attribute-changed", async (evt) => {
-
-			await navigator.serviceWorker.register("./service-worker.js")
-			await new Promise((resolve, reject) => { setTimeout(resolve, 1000)})
 			console.log("load")
 			await this.load(this.attr("from"))
 		});
@@ -39,6 +38,9 @@ class ScoreBoard extends $.CustomElement {
 		var res = await $.request("GET", url)
 		console.log("load complete");
 
+		$.get(this["--shadow"], "ol").appendChild($.render(itemsTemplate, res.json));
+
+		/*
 		res.json.map((e) => {
 			return $.render(itemTemplate, e);
 			// or
@@ -46,6 +48,7 @@ class ScoreBoard extends $.CustomElement {
 		}).forEach((e) => {
 			$.get(this["--shadow"], "ol").appendChild(e);
 		});
+		*/
 	}
 }
 customElements.define("score-board", ScoreBoard);

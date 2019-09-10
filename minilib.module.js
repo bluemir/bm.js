@@ -38,10 +38,6 @@ var $ = {
 		return new Promise(function(resolve, reject) {
 			var req = new XMLHttpRequest();
 
-			Object.keys(opts.header || {}).forEach(function(name){
-				req.setRequestHeader(name, opts.header[name]);
-			});
-
 			req.addEventListener("readystatechange", function(){
 				if (req.readyState  == 4) {
 					var result = {
@@ -64,13 +60,17 @@ var $ = {
 
 			if (opts.auth) {
 				console.debug("request with auth", opts.auth)
-				// In Chrome and firefox Auth heaer not included request(due to security, see https://bugs.chromium.org/p/chromium/issues/detail?id=128323)
+				// In Chrome and firefox Auth header not included request(due to security, see https://bugs.chromium.org/p/chromium/issues/detail?id=128323)
 				// so forced set header
 				req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true, opts.auth.user, opts.auth.password);
 				req.setRequestHeader("Authorization", "Basic " + btoa(opts.auth.user+":"+opts.auth.password));
 			} else {
 				req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true);
 			}
+
+			Object.keys(opts.header || {}).forEach(function(name){
+				req.setRequestHeader(name, opts.header[name]);
+			});
 
 			switch (typeof opts.body) {
 				case "object":
@@ -126,7 +126,7 @@ var $ = {
 			var result = data;
 			for (var i = 0; i < arr.length; i++) {
 				if (!result) {
-					console.warn(`[$.template] find pattern '${name}', but not provided`);
+					console.warn(`[$.render] find pattern '${name}', but not provided`);
 					return "";
 				}
 				result = result[arr[i]]
@@ -140,6 +140,24 @@ var $ = {
 					node.textContent = node.textContent.replace(pattern, f)
 					break;
 				case Node.ELEMENT_NODE:
+					if (node.nodeName == "TEMPLATE" && node.attr("x-render-each") != null) {
+						var vName = node.attr("x-render-each")
+						var value;
+						if (vName == ".") {
+							value = data
+						} else {
+							value = f("", vName)
+						}
+
+						if(!(value instanceof Array)) {
+							value = [];
+						}
+
+						value.forEach(e => {
+							node.parentNode.appendChild($.render(node, e))
+						})
+					}
+
 					for (var i = 0; i <  node.attributes.length; i++) {
 						node.attributes[i].value = node.attributes[i].value.replace(pattern, f);
 					}
@@ -177,10 +195,6 @@ var $ = {
 			return elem.tagName != "TEMPLATE";
 		}
 	},
-	event: new EventTarget(),
-	_registerGlobal: function() {
-		window.$ = this;
-	},
 	animateFrame: function(callback, {fps = 30} = {}) {
 		var stop = false;
 		var fpsInterval = 1000 / fps;
@@ -205,7 +219,12 @@ var $ = {
 				}
 			}
 		}
-	}
+	},
+	event: new EventTarget(),
+	_registerGlobal: function() {
+		window.$ = this;
+	},
+
 }
 
 function resolveParam(url, params) {
