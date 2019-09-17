@@ -28,7 +28,12 @@ var $ = {
 		return newTag;
 	},
 	request: async function $request(method, url, options) {
-		var opts = options || {};
+		var o = options || {}
+		try {
+			var opts = $.config.hook.preRequest(method, url, o) || o;
+		} catch(e) {
+			var opts = o;
+		}
 
 		if (opts.timestamp !== false) {
 			opts.query = opts.query || {};
@@ -122,16 +127,7 @@ var $ = {
 		var clone = document.importNode(templateNode.content, true);
 
 		var f = function(match, name) {
-			var arr = name.split(".")
-			var result = data;
-			for (var i = 0; i < arr.length; i++) {
-				if (!result) {
-					console.warn(`[$.render] find pattern '${name}', but not provided`);
-					return "";
-				}
-				result = result[arr[i]]
-			}
-			return result || "";
+			return $.query(data, name) || "";
 		}
 		var pattern = /{{\s*([a-zA-Z0-9._-]+)\s*}}/g
 		var each = function(node) {
@@ -146,7 +142,7 @@ var $ = {
 						if (vName == ".") {
 							value = data
 						} else {
-							value = f("", vName)
+							value = $.query(data, vName) || [];
 						}
 
 						if(!(value instanceof Array)) {
@@ -230,7 +226,7 @@ var $ = {
 			}
 			result = result[keys[i]];
 		}
-		return result || "";
+		return result;
 	},
 	util: {
 		wsURL: function(url){
@@ -243,7 +239,11 @@ var $ = {
 	_registerGlobal: function() {
 		window.$ = this;
 	},
-
+	config: {
+		hook: {
+			preRequest: function(method, url, opt) { return opt }
+		},
+	},
 }
 
 function resolveParam(url, params) {
@@ -307,6 +307,22 @@ extend(Element, {
 		} else {
 			return this.getAttribute(name)
 		}
+	},
+	mapping: function(v) {
+		this.childNodes.forEach((elem) => {
+			var key = elem.attr("x-mapping-text")
+			if (key != "") {
+				elem.innerHTML = $.query(v, key);
+			}
+
+			var key = elem.attr("x-mapping-with")
+			if (key != "") {
+				elem.mapping($.query(v, key));
+				return
+			} else {
+				elem.mapping(v)
+			}
+		})
 	},
 })
 
