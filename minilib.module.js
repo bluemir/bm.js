@@ -220,6 +220,25 @@ var $ = {
 			}
 		}
 	},
+	query: function(data, query) {
+		var keys = query.split(".")
+
+		var result = data;
+		for (var i = 0; i < keys.length; i++) {
+			if (result === undefined) {
+				return undefined
+			}
+			result = result[keys[i]];
+		}
+		return result || "";
+	},
+	util: {
+		wsURL: function(url){
+			var u= new URL(url, document.location)
+			u.protocol = document.location.protocol.includes("https") ? "wss:" : "ws:"
+			return u;
+		},
+	},
 	event: new EventTarget(),
 	_registerGlobal: function() {
 		window.$ = this;
