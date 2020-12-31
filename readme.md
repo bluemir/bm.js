@@ -1,16 +1,11 @@
-bluemir's light-weight web component  library.
+# bm.js
 
+bluemir's micro javascript library.
 
-## HOW TO USE
+light-weight & simple & vanilla friendly
 
-see example
-
-## HOW TO RUN EXAMPLE
+## Usage
 
 ```
-git clone https://github.com/bluemir/web-components
-cd web-components
-python -m SimpleHTTPServer
-open localhost:8000/example/main.html
+import * as $ from "bm.module.js";
 ```
-
