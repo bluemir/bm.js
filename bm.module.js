@@ -92,8 +92,12 @@ export async function request(method, url, options) {
 
 		switch (typeof opts.body) {
 			case "object":
-				req.setRequestHeader("Content-Type", "application/json")
-				req.send(JSON.stringify(opts.body))
+				if (opt.body instanceof FormData) {
+					req.send(opt.body);
+				} else {
+					req.setRequestHeader("Content-Type", "application/json")
+					req.send(JSON.stringify(opts.body))
+				}
 				break;
 			case "string":
 				req.send(opts.body);
@@ -274,6 +278,7 @@ function extend(TargetClass, proto){
 extend(Node, {
 	appendTo: function(target) {
 		target.appendChild(this);
+		return this;
 	},
 	clear : function(filter) {
 		var f = filter || function(e) { return true };
