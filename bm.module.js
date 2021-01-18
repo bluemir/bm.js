@@ -218,9 +218,10 @@ export function wsURL (url){
 	return u;
 }
 
-export var util = {
+export const util = {
 	filter: {
 		notNull: e => e != null,
+		unique: (value, index, self) => self.indexOf(value) === index,
 	},
 	reduce: {
 		appendChild: function(parent, child) {
@@ -332,6 +333,9 @@ extend(HTMLCollection, {
 });
 
 extend(Array, {
+	"unique": function() {
+		return [... new Set(this)];
+	},
 	"promise": function() {
 		var arr = this;
 		return {
@@ -382,5 +386,47 @@ export class CustomElement extends HTMLElement {
 			this["--handler"][name] = evt => f.call(this, evt.detail);
 		}
 		return this["--handler"][name];
+	}
+}
+
+export class AwaitEventTarget {
+	constructor() {
+		this.handlers = new Map();
+	}
+
+	// method
+	addEventListener(eventName, handler) {
+		if (!this.handlers.has(eventName)) {
+			this.handlers.set(eventName, new Set());
+		}
+		this.handlers.get(eventName).add(handler);
+	}
+	removeEventListener(eventName, handler) {
+		if (!this.handlers.has(eventName)) {
+			return;
+		}
+		this.handlers.get(eventName).delete(handler);
+	}
+	dispatchEvent(event) {
+		let name = event.type;
+		if (!this.handlers.has(name)) {
+			return;
+		}
+		return [...this.handlers.get(name)].map(handler => {
+			return handler(event);
+		}).promise().all();
+	}
+
+	// syntactic sugar
+	on(eventName, handler) {
+		this.addEventListener(eventName, handler)
+	}
+	off(eventName, handler) {
+		this.removeEventListener(eventName, handler)
+	}
+	fireEvent(name, detail) {
+		var evt = new CustomEvent(name, {detail: detail});
+		// name will be evt.type
+		return this.dispatchEvent(evt);
 	}
 }
