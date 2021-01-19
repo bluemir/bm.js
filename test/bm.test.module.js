@@ -5,6 +5,7 @@ import "https://unpkg.com/mocha/mocha.js"
 
 console.log(chai, mocha)
 let assert = chai.assert;
+let expect = chai.expect;
 
 mocha.setup("tdd");
 mocha.checkLeaks();
@@ -31,7 +32,28 @@ suite("AwaitEventTarget", () => {
 
 		assert(endTime - startTime >= 50);
 	})
-})
+});
+suite("AwaitQueue", () => {
+	test("#test", async () => {
+		var q = new $.AwaitQueue();
 
+
+		q.add(async () => {
+			await $.timeout(50);
+		});
+		q.add(() => {
+			return "return value"
+		});
+
+		// main event loop
+		for(let func of q) {
+			let ret = await func();
+			if (ret == "return value"){
+				expect(ret).to.equal("return value");
+				return;
+			}
+		}
+	});
+});
 
 mocha.run();

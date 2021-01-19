@@ -354,6 +354,7 @@ export class CustomElement extends HTMLElement {
 		this["--shadow"]  = this.attachShadow({mode: 'open'})
 		this["--handler"] = {}
 	}
+	// syntactic sugar
 	attributeChangedCallback(name, oldValue, newValue) {
 		//  to use set follow to custom elements
 		//
@@ -365,8 +366,8 @@ export class CustomElement extends HTMLElement {
 			old: oldValue,
 			new: newValue,
 		});
+		this.onAttributeChanged && this.onAttributeChanged();
 	}
-	// syntax sugar
 	connectedCallback()  {
 		this.fireEvent("connected")
 		this.onConnected && this.onConnected();
@@ -428,5 +429,47 @@ export class AwaitEventTarget {
 		var evt = new CustomEvent(name, {detail: detail});
 		// name will be evt.type
 		return this.dispatchEvent(evt);
+	}
+}
+export class AwaitQueue {
+	/*
+		// usage
+
+		var q = new AwaitQueue();
+
+		q.add(() => )
+
+		// main event loop
+		for(let func of q) {
+			 await func();
+		}
+	*/
+	constructor() {
+		this.queue = [];
+		this.resolve = null;
+	}
+	[Symbol.iterator]() {
+		let next = () => {
+			if (this.queue.length > 0) {
+				return {
+					value: this.queue.shift(),
+				}
+			}
+			return {
+				value: (value) => {
+					return new Promise((resolve) => {
+						this.resolve = resolve.bind(this, value);
+					});
+				},
+			};
+		}
+		return { next }
+	}
+	add(f) {
+		this.queue.push(f)
+		if(this.resolve) {
+			this.resolve();
+			this.resolve = null;
+		}
 	}
 }
