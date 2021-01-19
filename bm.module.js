@@ -92,7 +92,7 @@ export async function request(method, url, options) {
 
 		switch (typeof opts.body) {
 			case "object":
-				if (opt.body instanceof FormData) {
+				if (opts.body instanceof FormData) {
 					req.send(opt.body);
 				} else {
 					req.setRequestHeader("Content-Type", "application/json")
