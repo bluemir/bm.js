@@ -37,7 +37,6 @@ suite("AwaitQueue", () => {
 	test("#test", async () => {
 		var q = new $.AwaitQueue();
 
-
 		q.add(async () => {
 			await $.timeout(50);
 		});
@@ -45,15 +44,58 @@ suite("AwaitQueue", () => {
 			return "return value"
 		});
 
+		let startTime = Date.now();
 		// main event loop
 		for(let func of q) {
 			let ret = await func();
 			if (ret == "return value"){
-				expect(ret).to.equal("return value");
 				return;
 			}
 		}
+		let endTime = Date.now();
+
+		assert(endTime - startTime >= 50);
 	});
+	test("#test promise", async () =>{
+		var q = new $.AwaitQueue();
+
+		var defer = $.defer();
+
+		q.add(defer.promise);
+
+		defer.resolve("end");
+
+		let startTime = Date.now();
+		// main event loop
+		for(let v of q) {
+			let ret = await v;
+			if (ret == "end"){
+				return;
+			}
+		}
+		let endTime = Date.now();
+
+		assert(endTime - startTime >= 50);
+	})
+	test("#anti pattern", async () => {
+		var q = new $.AwaitQueue();
+
+		q.add($.timeout(50));
+		q.add($.timeout(30)); // not after 50ms, it just begin...
+
+		let startTime = Date.now();
+		// main event loop
+		for(let v of q) {
+			let ret = await v;
+			if (ret == "end"){
+				return;
+			}
+		}
+		let endTime = Date.now();
+
+		assert(endTime - startTime >= 50);
+		assert(endTime - startTime < 80);
+	})
 });
 
 mocha.run();

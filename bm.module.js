@@ -432,18 +432,6 @@ export class AwaitEventTarget {
 	}
 }
 export class AwaitQueue {
-	/*
-		// usage
-
-		var q = new AwaitQueue();
-
-		q.add(() => )
-
-		// main event loop
-		for(let func of q) {
-			 await func();
-		}
-	*/
 	constructor() {
 		this.queue = [];
 		this.resolve = null;
@@ -471,5 +459,8 @@ export class AwaitQueue {
 			this.resolve();
 			this.resolve = null;
 		}
+	}
+	get length() {
+		return this.queue.length;
 	}
 }
