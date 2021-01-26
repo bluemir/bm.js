@@ -260,8 +260,9 @@ Object.keyValues= function(obj, f) {
 	});
 }
 
+const sig = "__bm.js_inserted__"
 function extend(TargetClass, proto){
-	if (TargetClass.hasOwnProperty("__minilib_inserted__")) {
+	if (TargetClass.hasOwnProperty(sig)) {
 		console.trace("already installed")
 		return // already inserted
 	}
@@ -274,7 +275,7 @@ function extend(TargetClass, proto){
 		TargetClass.prototype[name] = proto[name];
 	});
 
-	TargetClass.__minilib_inserted__ = true
+	TargetClass[sig] = true
 }
 extend(Node, {
 	appendTo: function(target) {
