@@ -389,6 +389,47 @@ export class CustomElement extends HTMLElement {
 		}
 		return this["--handler"][name];
 	}
+	static define(name) {
+		if (!name) {
+			name = transformCamelcaseToElementName(this.name)
+		}
+		// TODO validation check
+		// TODO conflict check
+		customElements.define(name, this);
+	}
+	//render() {
+	//	render(this.constructor.T(this), this.shadow)
+	//}
+}
+function transformCamelcaseToElementName(name) {
+	let t = "";
+	let tokens = [];
+	for (let i = 0; i < name.length; i ++){
+		let c = name[i];
+
+		if (/[A-Z]/.test(c)) {
+			if (/^[A-Z]+$/.test(t)) {
+				t += c;
+			} else {
+				tokens.push(t);
+				t = c;
+			}
+		} else if(/[_]/.test(c)) {
+			tokens.push(t);
+			t = "";
+		} else {
+			if (/^[A-Z]+$/.test(t)) {
+				// pick last
+				tokens.push(t.substring(0, t.length-1));
+				t = t[t.length-1]+c;
+			} else {
+				t += c;
+			}
+		}
+	}
+	tokens.push(t);
+
+	return tokens.filter(t => t.length > 0).map(t => t.toLowerCase()).join("-");
 }
 
 export class AwaitEventTarget {
@@ -445,23 +486,27 @@ export class AwaitQueue {
 				}
 			}
 			return {
-				value: (value) => {
-					return new Promise((resolve) => {
-						this.resolve = resolve.bind(this, value);
-					});
-				},
+				value: new Promise((resolve) => {
+					this.resolve = resolve.bind(this);
+				}),
 			};
 		}
 		return { next }
 	}
 	add(f) {
-		this.queue.push(f)
 		if(this.resolve) {
-			this.resolve();
+			this.resolve(f);
 			this.resolve = null;
+			return
 		}
+		this.queue.push(f)
 	}
 	get length() {
 		return this.queue.length;
 	}
+}
+
+// for test
+export var __test__ = {
+	transformCamelcaseToElementName,
 }

@@ -10,6 +10,20 @@ let expect = chai.expect;
 mocha.setup("tdd");
 mocha.checkLeaks();
 
+suite("transformCamelcaseToElementName", () => {
+	test("#test", () => {
+		let t = $.__test__.transformCamelcaseToElementName;
+
+		assert.equal(t("CustomElement"), "custom-element")
+		assert.equal(t("Custom_Element"), "custom-element")
+		assert.equal(t("custom_Element"), "custom-element")
+		assert.equal(t("custom_element"), "custom-element")
+		assert.equal(t("custom_element_0"), "custom-element-0")
+		assert.equal(t("customHTML_Element"), "custom-html-element")
+		assert.equal(t("customHTMLElement"), "custom-html-element")
+	});
+})
+
 suite("AwaitEventTarget", () => {
 	test("#test", async () => {
 		let events = new $.AwaitEventTarget();
@@ -46,6 +60,7 @@ suite("AwaitQueue", () => {
 
 		let startTime = Date.now();
 		// main event loop
+		let i = 0;
 		for(let func of q) {
 			let ret = await func();
 			if (ret == "return value"){
@@ -69,33 +84,59 @@ suite("AwaitQueue", () => {
 		// main event loop
 		for(let v of q) {
 			let ret = await v;
+			assert.equal("end", ret);
 			if (ret == "end"){
-				return;
+				break;
 			}
 		}
 		let endTime = Date.now();
 
-		assert(endTime - startTime >= 50);
 	})
 	test("#anti pattern", async () => {
 		var q = new $.AwaitQueue();
 
 		q.add($.timeout(50));
 		q.add($.timeout(30)); // not after 50ms, it just begin...
+		q.add("end");
 
 		let startTime = Date.now();
 		// main event loop
 		for(let v of q) {
 			let ret = await v;
 			if (ret == "end"){
-				return;
+				break;
 			}
 		}
 		let endTime = Date.now();
 
 		assert(endTime - startTime >= 50);
 		assert(endTime - startTime < 80);
-	})
+	});
+	test("#wait on queue", async () => {
+		var q = new $.AwaitQueue();
+
+		setTimeout(() => {
+			q.add("end");
+		}, 100)
+		q.add("1");
+		q.add("2");
+		var i = 0;
+		let startTime = Date.now();
+		// main event loop
+		for(let v of q) {
+			let ret = await v;
+			// not infinite loop
+			i++;
+
+			if (ret == "end"){
+				break;
+			}
+		}
+		let endTime = Date.now();
+
+		assert( i < 10);
+		assert.equal(0, q.length);
+	});
 });
 
 mocha.run();
