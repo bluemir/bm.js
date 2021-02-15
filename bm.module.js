@@ -8,7 +8,16 @@ export var config = {
 	hook: {
 		preRequest: function(method, url, opt) { return opt }
 	},
+	plugin: {
+		/*
+		import {config} from "../lib/bm.js/bm.module.js";
+		import * as lithtml from 'lit-html';
+
+		config.plugin.lithtml = lithtml;
+		*/
+	},
 }
+
 export function get(target, query) {
 	if(target.querySelector instanceof Function) {
 		return target.querySelector(query);
@@ -40,7 +49,6 @@ export function create(tagname, attr = {}) {
 	Object.entries(attr).filter(([key, values]) => key[0] != "$").forEach(([key, value]) => {
 		newTag.setAttribute(key, value);
 	});
-
 	return newTag;
 }
 export async function request(method, url, options) {
@@ -398,11 +406,15 @@ export class CustomElement extends HTMLElement {
 		}
 		// TODO validation check
 		// TODO conflict check
+		console.debug("regitster element", name);
 		customElements.define(name, this);
 	}
-	//render() {
-	//	render(this.constructor.T(this), this.shadow)
-	//}
+	render() {
+		if(config.plugin.lithtml) {
+			config.plugin.lithtml.render(this.constructor.T(this), this.shadow)
+		}
+		// TODO other template engine
+	}
 }
 function transformCamelcaseToElementName(name) {
 	let t = "";
