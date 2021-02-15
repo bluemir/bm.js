@@ -21,23 +21,26 @@ export function all(target, query) {
 	}
 	return document.querySelectorAll(target);
 }
-export function create(tagname, attr) {
+export function create(tagname, attr = {}) {
 	var newTag = document.createElement(tagname);
-	if (attr && attr.$text){
+	if (attr.$text){
 		newTag.appendChild(document.createTextNode(attr.$text));
 	}
-	if (attr && attr.$html){
+	if (attr.$html){
 		newTag.innerHTML = attr.$html;
 	}
-	if (attr && attr.$child) {
+	if (attr.$child) {
 		newTag.appendChild(attr.$child)
 	}
-	for(var key in (attr || {})){
-		if (key[0] == "$") {
-			continue; //skip
-		}
-		newTag.setAttribute(key, attr[key]);
+	if (attr.$values) {
+		Object.entries(attr.$values).forEach(([k, v]) => {
+			newTag[k] = v;
+		});
 	}
+	Object.entries(attr).filter(([key, values]) => key[0] != "$").forEach(([key, value]) => {
+		newTag.setAttribute(key, value);
+	});
+
 	return newTag;
 }
 export async function request(method, url, options) {
@@ -93,7 +96,7 @@ export async function request(method, url, options) {
 		switch (typeof opts.body) {
 			case "object":
 				if (opts.body instanceof FormData) {
-					req.send(opt.body);
+					req.send(opts.body);
 				} else {
 					req.setRequestHeader("Content-Type", "application/json")
 					req.send(JSON.stringify(opts.body))
