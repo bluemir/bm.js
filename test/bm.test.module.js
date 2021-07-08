@@ -48,11 +48,14 @@ suite("AwaitEventTarget", () => {
 	})
 });
 suite("AwaitQueue", () => {
-	test("#test", async () => {
+	test("#test pre-added job", async () => {
 		var q = new $.AwaitQueue();
 
 		q.add(async () => {
 			await $.timeout(50);
+		});
+		q.add(async () => {
+			await $.timeout(30);
 		});
 		q.add(() => {
 			return "return value"
@@ -64,79 +67,100 @@ suite("AwaitQueue", () => {
 		for(let func of q) {
 			let ret = await func();
 			if (ret == "return value"){
-				return;
-			}
-		}
-		let endTime = Date.now();
-
-		assert(endTime - startTime >= 50);
-	});
-	test("#test promise", async () =>{
-		var q = new $.AwaitQueue();
-
-		var defer = $.defer();
-
-		q.add(defer.promise);
-
-		defer.resolve("end");
-
-		let startTime = Date.now();
-		// main event loop
-		for(let v of q) {
-			let ret = await v;
-			assert.equal("end", ret);
-			if (ret == "end"){
 				break;
 			}
 		}
 		let endTime = Date.now();
 
-	})
-	test("#anti pattern", async () => {
-		var q = new $.AwaitQueue();
-
-		q.add($.timeout(50));
-		q.add($.timeout(30)); // not after 50ms, it just begin...
-		q.add("end");
-
-		let startTime = Date.now();
-		// main event loop
-		for(let v of q) {
-			let ret = await v;
-			if (ret == "end"){
-				break;
-			}
-		}
-		let endTime = Date.now();
-
-		assert(endTime - startTime >= 50);
-		assert(endTime - startTime < 80);
+		assert(endTime - startTime >= 80);
 	});
-	test("#wait on queue", async () => {
+	test("#test wait and add job", async () => {
 		var q = new $.AwaitQueue();
 
 		setTimeout(() => {
-			q.add("end");
-		}, 100)
-		q.add("1");
-		q.add("2");
-		var i = 0;
+			q.add(async () => await $.timeout(30));
+		}, 50);
+
 		let startTime = Date.now();
 		// main event loop
-		for(let v of q) {
-			let ret = await v;
-			// not infinite loop
-			i++;
-
-			if (ret == "end"){
-				break;
-			}
+		let i = 0;
+		for(let func of q) {
+			let ret = await func();
+			console.log(ret);
+			break;
 		}
 		let endTime = Date.now();
 
-		assert( i < 10);
-		assert.equal(0, q.length);
+		assert(endTime - startTime >= 80);
 	});
+});
+
+suite("$.merge", () => {
+	test("basic", async () => {
+		let a = {
+			foo: "bar",
+		};
+		let b = {
+			t1: "t",
+		};
+
+		let t = $.merge(a, b);
+
+		assert.deepEqual(t, {
+			foo: "bar",
+			t1: "t",
+		});
+
+		assert.notEqual(a, t);
+		assert.notEqual(b, t);
+	});
+	test("deep copy", () => {
+		let a = {
+			foo: {
+				t1: "v1",
+			},
+		}
+		let b = {
+			foo: {
+				t2: "v2",
+			}
+		}
+
+		let t = $.merge(a, b);
+
+		assert.deepEqual(t, {
+			foo: {
+				t1: "v1",
+				t2: "v2",
+			},
+		});
+	});
+	test("multiple args", () => {
+		let a = {
+			foo: {
+				t1: "v1",
+			},
+		}
+		let b = {
+			foo: {
+				t2: "v2",
+			},
+		}
+		let c = {
+			foo: {
+				t3:"v3",
+			},
+		}
+		let t = $.merge(a, b, c);
+
+		assert.deepEqual(t, {
+			foo: {
+				t1: "v1",
+				t2: "v2",
+				t3: "v3",
+			},
+		});
+	})
 });
 
 mocha.run();

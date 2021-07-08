@@ -211,6 +211,19 @@ export function jq(data, query, value) {
 		throw new ExtendedError("[$.jq] not found", e);
 	}
 }
+export function merge(...args) {
+	return args.reduce((target, src={}) => {
+		return Object.entries(src).reduce((t, [key,value]) => {
+			if (value instanceof Object) {
+				return {
+					...t,
+					[key]: merge(t[key], value)
+				}
+			}
+			return {...t, [key]:value}
+		}, target)
+	}, {})
+}
 
 class ExtendedError extends Error {
 	constructor(message, error){
@@ -269,6 +282,14 @@ Object.keyValues= function(obj, f) {
 	return Object.entries(obj).map(([key, value]) => {
 		return {key, value};
 	});
+}
+Object.map = function(obj, f) {
+	return Object.entries(obj).map(([key, value]) => {
+		return f(key, value)
+	}).reduce((p, c) => {
+		p[c.key] = c.value;
+		return p;
+	}, {});
 }
 
 const sig = "__bm.js_inserted__"
@@ -501,16 +522,19 @@ export class AwaitQueue {
 				}
 			}
 			return {
-				value: new Promise((resolve) => {
-					this.resolve = resolve.bind(this);
+				value: () => new Promise((resolve) => {
+					this.resolve = resolve;
 				}),
 			};
 		}
 		return { next }
 	}
 	add(f) {
+		if (!(f instanceof Function)) {
+			throw Error("must put function");
+		}
 		if(this.resolve) {
-			this.resolve(f);
+			this.resolve(f());
 			this.resolve = null;
 			return
 		}
