@@ -119,6 +119,9 @@ suite("$.merge", () => {
 			foo: {
 				t1: "v1",
 			},
+			bar: {
+				c1: "c1",
+			},
 		}
 		let b = {
 			foo: {
@@ -132,6 +135,9 @@ suite("$.merge", () => {
 			foo: {
 				t1: "v1",
 				t2: "v2",
+			},
+			bar: {
+				c1: "c1",
 			},
 		});
 	});
@@ -160,7 +166,41 @@ suite("$.merge", () => {
 				t3: "v3",
 			},
 		});
-	})
+	});
+	test("array", () => {
+		let a = {
+			foo: [1, 2],
+		}
+		let b = {
+			foo: [3, 4],
+		}
+
+		let t = $.merge(a, b);
+
+		assert.deepEqual(t, {
+			foo: [1, 2, 3, 4],
+		});
+	});
+	test("overwrite", () => {
+		let a = {
+			foo: {
+				t1: "v1",
+			},
+		}
+		let b = {
+			foo: {
+				t1: "v2",
+			}
+		}
+
+		let t = $.merge(a, b);
+
+		assert.deepEqual(t, {
+			foo: {
+				t1: "v2",
+			},
+		});
+	});
 });
 
 mocha.run();

@@ -214,6 +214,12 @@ export function jq(data, query, value) {
 export function merge(...args) {
 	return args.reduce((target, src={}) => {
 		return Object.entries(src).reduce((t, [key,value]) => {
+			if (value instanceof Array) {
+				return {
+					...t,
+					[key]: [...(t[key]||[]), ...value],
+				}
+			}
 			if (value instanceof Object) {
 				return {
 					...t,
