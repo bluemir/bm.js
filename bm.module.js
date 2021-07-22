@@ -79,7 +79,7 @@ export async function request(method, url, options) {
 					result.json = JSON.parse(result.text);
 				}
 
-				if (req.status >= 200, req.status < 300){
+				if (req.status >= 200 && req.status < 300){
 					resolve(result)
 				} else {
 					reject(result);
@@ -284,18 +284,50 @@ function queryString(obj) {
 	}).join("&");
 }
 
-Object.keyValues= function(obj, f) {
-	return Object.entries(obj).map(([key, value]) => {
-		return {key, value};
-	});
-}
+// f = ({key, value}) => {key, value}
 Object.map = function(obj, f) {
-	return Object.entries(obj).map(([key, value]) => {
-		return f(key, value)
-	}).reduce((p, c) => {
-		p[c.key] = c.value;
-		return p;
-	}, {});
+	return Object.entries(obj).map(([key, value]) => f({key,value})).reduce((obj, {key,value}={}) => (key?{ ...obj, [key]: value}:obj), {});
+}
+Object.same = function(x, y) {
+	if (x === null || x === undefined || y === null || y === undefined) {
+		return x === y;
+	}
+	if (x.constructor !== y.constructor) {
+		return false;
+	}
+	if (x instanceof RegExp || x instanceof Function) {
+		return x === y;
+	}
+	if (x === y || x.valueOf() === y.valueOf()) {
+		return true;
+	}
+	if (Array.isArray(x) && x.length !== y.length) {
+		return false;
+	}
+
+    // if they are dates, they must had equal valueOf
+	if (x instanceof Date) {
+		return false;
+	}
+
+	if (!(x instanceof Object)) {
+		return false;
+	}
+	if (!(y instanceof Object)) {
+		return false;
+	}
+	let xk = Object.keys(x);
+	let yk = Object.keys(y);
+
+	if (xk.length != yk.length) {
+		return false
+	}
+	if (!xk.every(i => yk.indexOf(i) !== -1)) {
+		return false
+	}
+
+    // recursive object equality check
+	return xk.every(i => Object.same(x[i], y[i]))
 }
 
 const sig = "__bm.js_inserted__"
