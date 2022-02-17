@@ -51,15 +51,14 @@ export function create(tagname, attr = {}) {
 	});
 	return newTag;
 }
-export async function request(method, url, options) {
-	var o = options || {}
+export async function request(method, url, options = {}) {
 	try {
-		var opts = config.hook.preRequest(method, url, o) || o;
+		var opts = config.hook.preRequest(method, url, options) || options;
 	} catch(e) {
-		var opts = o;
+		var opts = options;
 	}
 
-	if (opts.timestamp !== false) {
+	if (opts.timestamp) {
 		opts.query = opts.query || {};
 		opts.query["_timestamp"] = Date.now();
 	}
@@ -96,6 +95,8 @@ export async function request(method, url, options) {
 		} else {
 			req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true);
 		}
+
+		req.withCredentials = opts.withCredentials;
 
 		Object.keys(opts.header || {}).forEach(function(name){
 			req.setRequestHeader(name, opts.header[name]);
@@ -251,7 +252,6 @@ export function wsURL (url){
 export const util = {
 	filter: {
 		notNull: e => e != null,
-		unique: (value, index, self) => self.indexOf(value) === index,
 	},
 	reduce: {
 		appendChild: function(parent, child) {
@@ -365,12 +365,10 @@ extend(Element, {
 			return
 		}
 		if (value !== undefined) {
-
 			this.setAttribute(name, value)
 			return value;
-		} else {
-			return this.getAttribute(name)
 		}
+		return this.getAttribute(name)
 	},
 })
 
@@ -393,26 +391,36 @@ extend(EventTarget, {
 });
 
 extend(NodeList, {
-	"map":    Array.prototype.map,
-	"filter": Array.prototype.filter,
+	map:    Array.prototype.map,
+	filter: Array.prototype.filter,
 	//"forEach": Array.prototype.forEach,
 });
 extend(HTMLCollection, {
-	"map":     Array.prototype.map,
-	"filter":  Array.prototype.filter,
-	"forEach": Array.prototype.forEach,
+	map:     Array.prototype.map,
+	filter:  Array.prototype.filter,
+	forEach: Array.prototype.forEach,
 });
 
 extend(Array, {
-	"unique": function() {
-		return [... new Set(this)];
+	unique: function(isSame) {
+		if (!isSame) {
+			return [... new Set(this)];
+		}
+		return this.filter((v, i)  => this.first(v, isSame) == i);
 	},
-	"promise": function() {
+	promise: function() {
 		var arr = this;
 		return {
 			all:  () => Promise.all(arr),
 			any:  () => Promise.any(arr),
 			race: () => Promise.race(arr),
+		}
+	},
+	first: function(v, isSame = ((a,b)=>a==b)) {
+		for (let i = 0; i < this.length; i ++){
+			if(isSame(this[i], v)) {
+				return i;
+			}
 		}
 	},
 });
@@ -461,6 +469,7 @@ export class CustomElement extends HTMLElement {
 	}
 	static define(name) {
 		if (!name) {
+			// could be failed with minified
 			name = transformCamelcaseToElementName(this.name)
 		}
 		// TODO validation check
@@ -584,6 +593,6 @@ export class AwaitQueue {
 }
 
 // for test
-export var __test__ = {
+export const __test__ = {
 	transformCamelcaseToElementName,
 }
