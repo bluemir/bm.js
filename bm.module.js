@@ -39,7 +39,11 @@ export function create(tagname, attr = {}) {
 		newTag.innerHTML = attr.$html;
 	}
 	if (attr.$child) {
-		newTag.appendChild(attr.$child)
+		if (attr.$child instanceof Array){
+			attr.$child.forEach(n => newTag.appendChild(n))
+		} else {
+			newTag.appendChild(attr.$child)
+		}
 	}
 	if (attr.$values) {
 		Object.entries(attr.$values).forEach(([k, v]) => {
