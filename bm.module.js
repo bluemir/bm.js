@@ -591,6 +591,9 @@ export class AwaitQueue {
 		}
 		this.queue.push(f)
 	}
+	remove(f) {
+		this.queue = this.queue.filter(job => job != f);
+	}
 	get length() {
 		return this.queue.length;
 	}
