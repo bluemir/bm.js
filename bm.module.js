@@ -160,30 +160,33 @@ export function form(form) {
 		return obj;
 	}, {});
 }
-export  function animateFrame(callback, {fps = 30} = {}) {
+// for await ( let dt of animateFrames()){ /* do something */ }
+export function animateFrames({fps = 30} = {}) {
 	var stop = false;
 	var fpsInterval = 1000 / fps;
 	var then = Date.now();
-	animate();
 
-	function animate() {
-		if (stop) {
-			return;
-		}
-		requestAnimationFrame(animate);
+	async function* f() {
+		while(true) {
+			yield new Promise((resolve, reject) => {
+				const animate = () => {
+					var now = Date.now();
+					var elapsed = now - then;
 
-		var now = Date.now();
-		var elapsed = now - then;
+					if (elapsed > fpsInterval) {
+						then = now - (elapsed%fpsInterval);
 
-		if (elapsed > fpsInterval) {
-			then = now - (elapsed % fpsInterval);
-
-			var ret = callback(elapsed - (elapsed%fpsInterval));
-			if (ret && ret.stop) {
-				stop = true;
-			}
+						resolve(elapsed - (elapsed%fpsInterval))
+					} else {
+						// wait next frame
+						requestAnimationFrame(animate)
+					}
+				}
+				requestAnimationFrame(animate)
+			});
 		}
 	}
+	return f();
 }
 export function jq(data, query, value) {
 	var keys = query.split("\\.").map(str => str.split(".")).reduce((p, c) => {
