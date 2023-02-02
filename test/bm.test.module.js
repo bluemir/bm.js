@@ -10,20 +10,6 @@ let expect = chai.expect;
 mocha.setup("tdd");
 mocha.checkLeaks();
 
-suite("transformCamelcaseToElementName", () => {
-	test("#test", () => {
-		let t = $.__test__.transformCamelcaseToElementName;
-
-		assert.equal(t("CustomElement"), "custom-element")
-		assert.equal(t("Custom_Element"), "custom-element")
-		assert.equal(t("custom_Element"), "custom-element")
-		assert.equal(t("custom_element"), "custom-element")
-		assert.equal(t("custom_element_0"), "custom-element-0")
-		assert.equal(t("customHTML_Element"), "custom-html-element")
-		assert.equal(t("customHTMLElement"), "custom-html-element")
-	});
-})
-
 suite("AwaitEventTarget", () => {
 	test("#test", async () => {
 		let events = new $.AwaitEventTarget();

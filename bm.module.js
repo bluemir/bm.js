@@ -3,18 +3,9 @@
 //
 // Usage
 // import * as $ from "bm.module.js";
-
 export var config = {
 	hook: {
 		preRequest: function(method, url, opt) { return opt }
-	},
-	plugin: {
-		/*
-		import {config} from "../lib/bm.js/bm.module.js";
-		import * as lithtml from 'lit-html';
-
-		config.plugin.lithtml = lithtml;
-		*/
 	},
 }
 
@@ -62,10 +53,22 @@ export async function request(method, url, options = {}) {
 		var opts = options;
 	}
 
-	if (opts.timestamp) {
+	if (opts.timestamp === true) {
 		opts.query = opts.query || {};
 		opts.query["_timestamp"] = Date.now();
 	}
+
+	// parse url
+	const u = new URL(url, location);
+	opts.query = [...u.searchParams.entries()].reduce((obj, [key, value]) => {
+		obj[key] = value
+		return obj
+	}, opts.query || {});
+
+
+
+	u.search = "";
+	url = u.href
 
 	return new Promise(function(resolve, reject) {
 		var req = new XMLHttpRequest();
@@ -101,10 +104,11 @@ export async function request(method, url, options = {}) {
 		}
 
 		req.withCredentials = opts.withCredentials;
-
-		Object.keys(opts.header || {}).forEach(function(name){
-			req.setRequestHeader(name, opts.header[name]);
+		Object.keys(opts.headers || {}).forEach(function(name){
+			req.setRequestHeader(name, opts.headers[name]);
 		});
+
+		opts.body = opts.body || opts.data;
 
 		switch (typeof opts.body) {
 			case "object":
@@ -160,8 +164,17 @@ export function form(form) {
 		return obj;
 	}, {});
 }
-// for await ( let dt of animateFrames()){ /* do something */ }
-export function animateFrames({fps = 30} = {}) {
+export function debounce(func, {timeout = 200} = {}) {
+	let timer;
+
+	return function(...args) {
+		clearTimeout(timer);
+		timer = setTimeout(_=> func.apply(this, args), timeout)
+	}
+}
+
+// for await ( let dt of $.frames()){ /* do something */ }
+export function frames({fps = 30} = {}) {
 	var stop = false;
 	var fpsInterval = 1000 / fps;
 	var then = Date.now();
@@ -187,6 +200,32 @@ export function animateFrames({fps = 30} = {}) {
 		}
 	}
 	return f();
+}
+
+export function animateFrame(callback, {fps = 30} = {}) {
+	var stop = false;
+	var fpsInterval = 1000 / fps;
+	var then = Date.now();
+	animate();
+
+	function animate() {
+		if (stop) {
+			return;
+		}
+		requestAnimationFrame(animate);
+
+		var now = Date.now();
+		var elapsed = now - then;
+
+		if (elapsed > fpsInterval) {
+			then = now - (elapsed % fpsInterval);
+
+			var ret = callback(elapsed - (elapsed%fpsInterval));
+			if (ret && ret.stop) {
+				stop = true;
+			}
+		}
+	}
 }
 export function jq(data, query, value) {
 	var keys = query.split("\\.").map(str => str.split(".")).reduce((p, c) => {
@@ -259,6 +298,7 @@ export function wsURL (url){
 export const util = {
 	filter: {
 		notNull: e => e != null,
+		unique: (value, index, self) => self.indexOf(value) === index,
 	},
 	reduce: {
 		appendChild: function(parent, child) {
@@ -287,11 +327,15 @@ function queryString(obj) {
 		return "";
 	}
 	return "?" + Object.keys(obj).map(function(key) {
-		return key + "=" + obj[key];
+		return key + "=" + encodeURIComponent(obj[key]);
 	}).join("&");
 }
 
-// f = ({key, value}) => {key, value}
+Object.keyValues= function(obj, f) {
+	return Object.entries(obj).map(([key, value]) => {
+		return {key, value};
+	});
+}
 Object.map = function(obj, f) {
 	return Object.entries(obj).map(([key, value]) => f({key,value})).reduce((obj, {key,value}={}) => (key?{ ...obj, [key]: value}:obj), {});
 }
@@ -312,7 +356,7 @@ Object.same = function(x, y) {
 		return false;
 	}
 
-    // if they are dates, they must had equal valueOf
+	// if they are dates, they must had equal valueOf
 	if (x instanceof Date) {
 		return false;
 	}
@@ -333,7 +377,7 @@ Object.same = function(x, y) {
 		return false
 	}
 
-    // recursive object equality check
+	// recursive object equality check
 	return xk.every(i => Object.same(x[i], y[i]))
 }
 
@@ -372,22 +416,22 @@ extend(Element, {
 			return
 		}
 		if (value !== undefined) {
+
 			this.setAttribute(name, value)
 			return value;
+		} else {
+			return this.getAttribute(name)
 		}
-		return this.getAttribute(name)
 	},
 })
 
 extend(EventTarget, {
 	on: function(name, handler, opt) {
 		this.addEventListener(name, handler, opt);
-
 		return this;
 	},
 	off: function(name, handler, opt) {
 		this.removeEventListener(name, handler, opt)
-
 		return this;
 	},
 	fireEvent: function(name, detail) {
@@ -434,11 +478,16 @@ extend(Array, {
 
 
 export class CustomElement extends HTMLElement {
-	constructor() {
+	constructor({enableShadow = true} = {}) {
 		super();
 
-		this["--shadow"]  = this.attachShadow({mode: 'open'})
+		if (enableShadow) {
+			//this["--shadow"] = this.attachShadow({mode: 'open'})
+			this.attachShadow({mode: 'open'})
+		}
 		this["--handler"] = {}
+
+		this.render && this.render();
 	}
 	// syntactic sugar
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -452,18 +501,20 @@ export class CustomElement extends HTMLElement {
 			old: oldValue,
 			new: newValue,
 		});
-		this.onAttributeChanged && this.onAttributeChanged();
+		this.onAttributeChanged && this.onAttributeChanged(name, oldValue, newValue);
 	}
 	connectedCallback()  {
-		this.fireEvent("connected")
+		this.render && this.render();
 		this.onConnected && this.onConnected();
+		this.fireEvent("connected")
 	}
 	disconnectedCallback() {
-		this.fireEvent("disconnected")
 		this.onDisconnected && this.onDisconnected();
+		this.fireEvent("disconnected")
 	}
 	get shadow() {
-		return this["--shadow"];
+		return this.shadowRoot;
+		//return this["--shadow"];
 	}
 	handler(h) {
 		var name = h instanceof Function ? h.name : h;
@@ -474,52 +525,6 @@ export class CustomElement extends HTMLElement {
 		}
 		return this["--handler"][name];
 	}
-	static define(name) {
-		if (!name) {
-			// could be failed with minified
-			name = transformCamelcaseToElementName(this.name)
-		}
-		// TODO validation check
-		// TODO conflict check
-		console.debug("regitster element", name);
-		customElements.define(name, this);
-	}
-	render() {
-		if(config.plugin.lithtml) {
-			config.plugin.lithtml.render(this.constructor.T(this), this.shadow)
-		}
-		// TODO other template engine
-	}
-}
-function transformCamelcaseToElementName(name) {
-	let t = "";
-	let tokens = [];
-	for (let i = 0; i < name.length; i ++){
-		let c = name[i];
-
-		if (/[A-Z]/.test(c)) {
-			if (/^[A-Z]+$/.test(t)) {
-				t += c;
-			} else {
-				tokens.push(t);
-				t = c;
-			}
-		} else if(/[_]/.test(c)) {
-			tokens.push(t);
-			t = "";
-		} else {
-			if (/^[A-Z]+$/.test(t)) {
-				// pick last
-				tokens.push(t.substring(0, t.length-1));
-				t = t[t.length-1]+c;
-			} else {
-				t += c;
-			}
-		}
-	}
-	tokens.push(t);
-
-	return tokens.filter(t => t.length > 0).map(t => t.toLowerCase()).join("-");
 }
 
 export class AwaitEventTarget {
@@ -563,6 +568,7 @@ export class AwaitEventTarget {
 		return this.dispatchEvent(evt);
 	}
 }
+
 export class AwaitQueue {
 	constructor() {
 		this.queue = [];
@@ -602,7 +608,28 @@ export class AwaitQueue {
 	}
 }
 
-// for test
-export const __test__ = {
-	transformCamelcaseToElementName,
+export function logger(opt){
+	return new Logger(opt);
+}
+class Logger {
+	constructor({show, name} = {}) {
+		this.show = show;
+		this.name = name;
+	}
+	debug(message) {
+		if(this.show) return;
+		console.debug.apply(console, arguments);
+	}
+	info(message) {
+		if(this.show) return;
+		console.info.apply(console, arguments);
+	}
+	warn(message) {
+		if(this.show) return;
+		console.warn.apply(console, arguments);
+	}
+	error(message) {
+		if(this.show) return;
+		console.error.apply(console, arguments);
+	}
 }
