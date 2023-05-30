@@ -1,6 +1,15 @@
 import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
 
+/*
+
+<c-dropdown title="title">
+	<c-dropdown-item>a</c-dropdown-item>
+	<c-dropdown-item>b</c-dropdown-item>
+</c-dropdown>
+
+*/
+
 var tmpl = (app) => html`
 	<style>
 		:host {

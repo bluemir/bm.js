@@ -1,5 +1,19 @@
 import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
+/*
+
+<c-tabs selected="a">
+	<c-tab-header slot="header" role="a">A Header</c-tab-header>
+	<c-tab-panel  slot="panel"  role="a">
+		A Contents
+	</c-tab-panel>
+	<c-tab-header slot="header" role="b">B Header</c-tab-header>
+	<c-tab-panel  slot="panel"  role="b" @active="${evt => onActive(evt)}">
+		B Contents
+	</c-tab-panel>
+</c-tabs>
+
+*/
 
 var tmpl = (app) => html`
 	<style>
