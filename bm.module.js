@@ -230,6 +230,28 @@ export function animateFrame(callback, {fps = 30} = {}) {
 		}
 	}
 }
+export function parsePathParam(pattern) {
+	let ptn = pattern.split("/").filter( str => str.length > 0);
+
+	let paths = location.pathname.split("/").filter( str => str.length > 0);
+
+	return ptn.reduce((obj, current, index) => {
+		if (obj === null) {
+			return obj;
+		}
+		if (current.startsWith(":")) {
+			let name = current.substring(1);
+			obj[name] = paths[index]
+		} else {
+			if (current != paths[index]) {
+				// not matched
+				return null;
+			}
+		}
+		return obj
+	}, {});
+}
+
 export function jq(data, query, value) {
 	var keys = query.split("\\.").map(str => str.split(".")).reduce((p, c) => {
 		if (p.length == 0 ) {
@@ -481,6 +503,9 @@ extend(Array, {
 
 
 export class CustomElement extends HTMLElement {
+	// private
+	#handler = {}
+
 	constructor({enableShadow = true} = {}) {
 		super();
 
@@ -488,9 +513,6 @@ export class CustomElement extends HTMLElement {
 			//this["--shadow"] = this.attachShadow({mode: 'open'})
 			this.attachShadow({mode: 'open'})
 		}
-		this["--handler"] = {}
-
-		this.render && this.render();
 	}
 	// syntactic sugar
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -504,7 +526,10 @@ export class CustomElement extends HTMLElement {
 			old: oldValue,
 			new: newValue,
 		});
-		this.onAttributeChanged && this.onAttributeChanged(name, oldValue, newValue);
+		this.onAttributeChanged(name, oldValue, newValue);
+	}
+	onAttributeChanged() {
+		this.render && this.render();
 	}
 	connectedCallback()  {
 		this.render && this.render();
@@ -517,16 +542,15 @@ export class CustomElement extends HTMLElement {
 	}
 	get shadow() {
 		return this.shadowRoot;
-		//return this["--shadow"];
 	}
 	handler(h) {
 		var name = h instanceof Function ? h.name : h;
 		var f = h instanceof Function ? h : this[h];
 
-		if (!this["--handler"][name]) {
-			this["--handler"][name] = evt => f.call(this, evt.detail);
+		if (!this.#handler[name]) {
+			this.#handler[name] = evt => f.call(this, evt.detail);
 		}
-		return this["--handler"][name];
+		return this.#handler[name];
 	}
 }
 
