@@ -510,7 +510,6 @@ export class CustomElement extends HTMLElement {
 		super();
 
 		if (enableShadow) {
-			//this["--shadow"] = this.attachShadow({mode: 'open'})
 			this.attachShadow({mode: 'open'})
 		}
 	}
@@ -540,9 +539,6 @@ export class CustomElement extends HTMLElement {
 		this.onDisconnected && this.onDisconnected();
 		this.fireEvent("disconnected")
 	}
-	get shadow() {
-		return this.shadowRoot;
-	}
 	handler(h) {
 		var name = h instanceof Function ? h.name : h;
 		var f = h instanceof Function ? h : this[h];
@@ -553,6 +549,19 @@ export class CustomElement extends HTMLElement {
 		return this.#handler[name];
 	}
 }
+
+export class CustomFormElement extends HTMLFormElement {
+	connectedCallback()  {
+		this.onConnected && this.onConnected();
+		this.on("submit", evt => this.onSubmit(evt))
+		this.fireEvent("connected")
+	}
+	disconnectedCallback() {
+		this.onDisconnected && this.onDisconnected();
+		this.fireEvent("disconnected")
+	}
+}
+
 
 export class AwaitEventTarget {
 	constructor() {
