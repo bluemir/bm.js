@@ -205,31 +205,6 @@ export function frames({fps = 30} = {}) {
 	return f();
 }
 
-export function animateFrame(callback, {fps = 30} = {}) {
-	var stop = false;
-	var fpsInterval = 1000 / fps;
-	var then = Date.now();
-	animate();
-
-	function animate() {
-		if (stop) {
-			return;
-		}
-		requestAnimationFrame(animate);
-
-		var now = Date.now();
-		var elapsed = now - then;
-
-		if (elapsed > fpsInterval) {
-			then = now - (elapsed % fpsInterval);
-
-			var ret = callback(elapsed - (elapsed%fpsInterval));
-			if (ret && ret.stop) {
-				stop = true;
-			}
-		}
-	}
-}
 export function parsePathParam(pattern) {
 	let ptn = pattern.split("/").filter( str => str.length > 0);
 
@@ -501,19 +476,17 @@ extend(Array, {
 	},
 });
 
-
-export class CustomElement extends HTMLElement {
-	// private
-	#handler = {}
-
-	constructor({enableShadow = true} = {}) {
-		super();
-
-		if (enableShadow) {
-			this.attachShadow({mode: 'open'})
-		}
-	}
-	// syntactic sugar
+extend(HTMLElement, {
+	// syntactic sugars
+	connectedCallback() {
+		this.render && this.render();
+		this.onConnected && this.onConnected();
+		this.fireEvent("connected")
+	},
+	disconnectedCallback() {
+		this.onDisconnected && this.onDisconnected();
+		this.fireEvent("disconnected")
+	},
 	attributeChangedCallback(name, oldValue, newValue) {
 		//  to use set follow to custom elements
 		//
@@ -526,42 +499,22 @@ export class CustomElement extends HTMLElement {
 			new: newValue,
 		});
 		this.onAttributeChanged(name, oldValue, newValue);
-	}
+	},
 	onAttributeChanged() {
 		this.render && this.render();
-	}
-	connectedCallback()  {
-		this.render && this.render();
-		this.onConnected && this.onConnected();
-		this.fireEvent("connected")
-	}
-	disconnectedCallback() {
-		this.onDisconnected && this.onDisconnected();
-		this.fireEvent("disconnected")
-	}
-	handler(h) {
-		var name = h instanceof Function ? h.name : h;
-		var f = h instanceof Function ? h : this[h];
+	},
+})
 
-		if (!this.#handler[name]) {
-			this.#handler[name] = evt => f.call(this, evt.detail);
+export class CustomElement extends HTMLElement {
+	constructor({enableShadow = true} = {}) {
+		super();
+
+		if (enableShadow) {
+			// this.shadowRoot
+			this.attachShadow({mode: 'open'})
 		}
-		return this.#handler[name];
 	}
 }
-
-export class CustomFormElement extends HTMLFormElement {
-	connectedCallback()  {
-		this.onConnected && this.onConnected();
-		this.on("submit", evt => this.onSubmit(evt))
-		this.fireEvent("connected")
-	}
-	disconnectedCallback() {
-		this.onDisconnected && this.onDisconnected();
-		this.fireEvent("disconnected")
-	}
-}
-
 
 export class AwaitEventTarget {
 	constructor() {
@@ -641,31 +594,5 @@ export class AwaitQueue {
 	}
 	get length() {
 		return this.queue.length;
-	}
-}
-
-export function logger(opt){
-	return new Logger(opt);
-}
-class Logger {
-	constructor({show, name} = {}) {
-		this.show = show;
-		this.name = name;
-	}
-	debug(message) {
-		if(this.show) return;
-		console.debug.apply(console, arguments);
-	}
-	info(message) {
-		if(this.show) return;
-		console.info.apply(console, arguments);
-	}
-	warn(message) {
-		if(this.show) return;
-		console.warn.apply(console, arguments);
-	}
-	error(message) {
-		if(this.show) return;
-		console.error.apply(console, arguments);
 	}
 }
