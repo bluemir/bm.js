@@ -65,19 +65,22 @@ export async function request(method, url, options = {}) {
 		return obj
 	}, opts.query || {});
 
-
-
 	u.search = "";
 	url = u.href
 
 	return new Promise(function(resolve, reject) {
 		var req = new XMLHttpRequest();
 
+		if (opts.timeout) {
+			req.timeout = opts.timeout
+		}
+
 		req.addEventListener("readystatechange", function(){
-			if (req.readyState  == 4) {
+			if (req.readyState == 4) {
 				var result = {
 					statusCode: req.status,
-					text : req.responseText,
+					text:       req.responseText,
+					raw:        req.response,
 				};
 
 				var contentType = req.getResponseHeader("Content-Type") || "";
@@ -481,7 +484,7 @@ extend(HTMLElement, {
 	connectedCallback() {
 		this.render && this.render();
 		this.onConnected && this.onConnected();
-		this.fireEvent("connected")
+		this.fireEvent("connected");
 	},
 	disconnectedCallback() {
 		this.onDisconnected && this.onDisconnected();
